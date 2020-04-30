@@ -9,6 +9,10 @@ public class TicketDB {
 		this.tickets = new HashMap<String, Ticket>();
 	}
 	
+	public HashMap<String,Ticket> getTickets(){
+		return tickets;
+	}
+	
 	public void addTicket(Ticket t){
 		tickets.put(t.getSerialNumber(), t);
 	}

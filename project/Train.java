@@ -25,6 +25,10 @@ public class Train {
 		return trainType;
 	}
 	
+	public int getDist(){
+		return dist;
+	}
+	
 	public int getTrainCode(){
 		return trainCode;
 	}

@@ -30,6 +30,14 @@ public class Ticket {
 		return new int[]{carNumber, seatNumber};
 	}
 	
+	public String[] getDep(){
+		return dep;
+	}
+	
+	public String[] getArr(){
+		return arr;
+	}
+	
 	public void displayTicket(){
 		System.out.println("Bilet seria " + this.serialNumber);
 		System.out.println("Plecare: " + this.dep[0] + " (" + this.dep[1] + ")");

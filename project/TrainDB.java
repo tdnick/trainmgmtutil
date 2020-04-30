@@ -9,6 +9,10 @@ public class TrainDB {
 		this.trains = new ArrayList<Train>();
 	}
 	
+	public ArrayList<Train> getTrains(){
+		return trains;
+	}
+	
 	public void addTrain(Train t){
 		this.trains.add(t);
 	}

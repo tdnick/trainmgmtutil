@@ -8,17 +8,52 @@ public class TicketingService {
 	TicketDB ticketDatabase;
 	
 	public TicketingService(){
-		trainDatabase = new TrainDB();
-		ticketDatabase = new TicketDB();
 	}
 	
 	public void displayMenu(){
 		Scanner in = new Scanner(System.in);
 		Scanner in2 = new Scanner(System.in);
+		boolean bd;
 		String choice = new String();
+		String trainPath = new String();
+		String ticketPath = new String();
 		
 		System.out.println("Train Ticketing and Management Utility");
 		System.out.println("--------------------------------------");
+		
+		System.out.print("Lucrati cu baze de date? (true/false) ");
+		bd = in.nextBoolean();
+		in.nextLine();
+		if (bd){
+			System.out.print("Introduceti calea catre baza de date a trenurilor: ");
+			trainPath = in.nextLine();
+			System.out.print("Introduceti calea catre baza de date a biletelor: ");
+			ticketPath = in.nextLine();
+			try {
+				trainDatabase = FileProcessor.getInstance().readTrains(trainPath);
+				ticketDatabase = FileProcessor.getInstance().readTickets(ticketPath);
+				
+				//generare rezervari curente pe baza informatiilor date
+				
+				for (Map.Entry t : ticketDatabase.getTickets().entrySet()){
+					int[] seatData = ((Ticket)t.getValue()).getSeat();
+					int code = ((Ticket)t.getValue()).getCode();
+					for (Train tr : trainDatabase.getTrains()){
+						if (code == tr.getTrainCode()){
+							Car c = tr.getCars().get(seatData[0]);
+							c.getSeats()[seatData[1]].assignSeat( ((Ticket)t.getValue()).getSerialNumber());
+						}
+					}
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		else{
+			trainDatabase = new TrainDB();
+			ticketDatabase = new TicketDB();
+		}
 		
 		while (!choice.equals("q")){
 			
@@ -71,6 +106,11 @@ public class TicketingService {
 					trainDatabase.sortTrains();
 					clearScreen();
 					System.out.println("Trenul " + type + code + " a fost adaugat cu succes!\n");
+					try {
+						FileProcessor.getInstance().audit("log.csv", "introducere_tren");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					break;
 					
 				case "b":
@@ -140,6 +180,11 @@ public class TicketingService {
 					}
 					clearScreen();
 					System.out.println("Vagoane introduse cu succes!\n");
+					try {
+						FileProcessor.getInstance().audit("log.csv", "introducere_vagoane");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					break;
 					
 				case "c":
@@ -151,6 +196,11 @@ public class TicketingService {
 					in.nextLine();
 					System.out.println();
 					trainDatabase.displayTrainComposition(code);
+					try {
+						FileProcessor.getInstance().audit("log.csv", "afisare_compozitie_tren");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					System.out.println();
 					break;
 					
@@ -169,6 +219,11 @@ public class TicketingService {
 						System.out.println("Nu a fost gasit niciun tren pe ruta dorita!");
 						break;
 					}
+					try {
+						FileProcessor.getInstance().audit("log.csv", "afisare_bilet_dupa_ruta");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					System.out.println();
 					break;
 				case "e":
@@ -180,6 +235,11 @@ public class TicketingService {
 						clearScreen();
 						System.out.println("Nu exista niciun tren in baza de date!");
 						break;
+					}
+					try {
+						FileProcessor.getInstance().audit("log.csv", "afisare_bilete");
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
 					System.out.println();
 					break;
@@ -199,6 +259,11 @@ public class TicketingService {
 					trainDatabase.removeTrain(r);
 					clearScreen();
 					System.out.println("Tren eliminat cu succes!");
+					try {
+						FileProcessor.getInstance().audit("log.csv", "anulare_tren");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					break;
 				case "g":
 					// genereaza bilet
@@ -263,6 +328,11 @@ public class TicketingService {
 					trainDatabase.reserveSeat(choiceOfTrain, seatInfo, serialNumber);
 					ticketDatabase.addTicket(ticket);
 					System.out.println("Bilet seria " + serialNumber + " generat cu succes!\n");
+					try {
+						FileProcessor.getInstance().audit("log.csv", "generare_bilet");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					break;
 				case "h":
 					System.out.print("Introduceti seria: ");
@@ -274,6 +344,11 @@ public class TicketingService {
 						break;
 					}
 					ret.displayTicket();
+					try {
+						FileProcessor.getInstance().audit("log.csv", "cautare_bilet_dupa_serie");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					System.out.println();
 					break;
 				case "i":
@@ -283,7 +358,12 @@ public class TicketingService {
 					int al = in.nextInt();
 					in.nextLine();
 					clearScreen();
-					ticketDatabase.displayAllTickets(al); 
+					ticketDatabase.displayAllTickets(al);
+					try {
+						FileProcessor.getInstance().audit("log.csv", "afisare_bilete");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					System.out.println();
 					break;
 				case "j":
@@ -302,9 +382,21 @@ public class TicketingService {
 					del.getCars().get(seat[0]).getSeats()[seat[1]].unassignSeat(); //sterge rezervare loc
 					ticketDatabase.removeTicket(sn);
 					clearScreen();
-					System.out.println("Bilet anulat cu succes!\n")
+					try {
+						FileProcessor.getInstance().audit("log.csv", "anulare_bilet");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					System.out.println("Bilet anulat cu succes!\n");
 					break;
 				case "q":
+					System.out.println("Salvare modificari...");
+					try {
+						FileProcessor.getInstance().writeTrains(trainPath, trainDatabase);
+						FileProcessor.getInstance().writeTickets(ticketPath, ticketDatabase);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 					System.out.println("Programul se va inchide.");
 					break;		
 				default:
